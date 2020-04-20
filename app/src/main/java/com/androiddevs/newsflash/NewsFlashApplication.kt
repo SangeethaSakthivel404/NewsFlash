@@ -1,12 +1,11 @@
-
 package com.androiddevs.newsflash
 
 import android.app.Application
-import com.androiddevs.newsflash.di.components.DaggerApplicationComponent
+import com.androiddevs.newsflash.di.components.DaggerAppComponent
 
 
 class NewsFlashApplication : Application() {
-    private val applicationInjector = DaggerApplicationComponent.builder()
-        .application(this)
-        .build()
+
+    val appComponent = DaggerAppComponent.builder()
+        .application(this).build()
 }
