@@ -31,7 +31,10 @@ class CustomTabLayout @JvmOverloads constructor(
         parentViewGroupScrollable.apply {
             isHorizontalScrollBarEnabled = false
         }
-        chipGroup.chipSpacingHorizontal = 16F.toDp(context).roundToInt()
+        chipGroup.apply {
+            isSingleLine = true
+            chipSpacingHorizontal = 8F.toDp(context).roundToInt()
+        }
     }
 
 
@@ -41,17 +44,9 @@ class CustomTabLayout @JvmOverloads constructor(
         }
     }
 
-    fun buildTabWithText(vararg titleList: String) {
+    fun buildTabsWithText(vararg titleList: String) {
         titleList.forEachIndexed { index, title ->
-            val chip: Chip = getChip(context) {
-                id = View.generateViewId()
-                text = title
-                isSelected = index == 0
-                isClickable = true
-                setOnClickListener(this@CustomTabLayout)
-            }
-            chipGroup.addView(chip)
-            chipList.add(chip)
+            addTab(title)
         }
     }
 
@@ -71,18 +66,21 @@ class CustomTabLayout @JvmOverloads constructor(
         var width = 0
         val display = display
         display?.let {
+
             val pointWidth = Point()
             val pointHeight = Point()
+
             display.getSize(pointWidth)
             display.getSize(pointHeight)
             chipList.forEach {
                 it.measure(pointWidth.x, pointHeight.y)
                 width += it.measuredWidth
             }
+
             if (width + 100 > context.resources.displayMetrics.widthPixels) {
                 parentViewGroup.removeAllViews()
-                parentViewGroupScrollable.addView(chipGroup)
                 removeAllViews()
+                parentViewGroupScrollable.addView(chipGroup)
                 addView(parentViewGroupScrollable)
             } else {
                 addView(parentViewGroup)

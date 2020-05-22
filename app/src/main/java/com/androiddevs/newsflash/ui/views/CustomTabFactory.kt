@@ -1,13 +1,15 @@
 package com.androiddevs.newsflash.ui.views
 
 import android.content.Context
+import android.content.res.ColorStateList
 import android.view.View
 import android.widget.LinearLayout
 import androidx.core.content.ContextCompat
 import com.androiddevs.newsflash.R
+import com.androiddevs.newsflash.utils.toDp
 import com.google.android.material.chip.Chip
 
-private const val CHIP_PADDING = 20
+private const val CHIP_PADDING = 16
 
 fun getChip(context: Context, initBlock: Chip.() -> Unit): Chip {
     return Chip(context).apply {
