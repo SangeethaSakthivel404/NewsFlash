@@ -15,15 +15,12 @@ class MainActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         binding = DataBindingUtil.setContentView(this@MainActivity, R.layout.activity_main)
-        binding.ctCustomTab.setTabs(
-            arrayOf(
-                "Recent News",
-                "Saved News",
-                "Profile"
-            )
-        )
-        binding.ctCustomTab.setOnTabChangeCallback { tabTitle ->
-            Toast.makeText(this, tabTitle, Toast.LENGTH_SHORT).show()
+        binding.ctCustomTab.initTabs {
+            buildTabWithText("Recent News","Saved News","Profile")
+
+            setOnTabChangeCallback { tabTitle ->
+                Toast.makeText(this@MainActivity, tabTitle, Toast.LENGTH_SHORT).show()
+            }
         }
 
     }
