@@ -16,7 +16,7 @@ class MainActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         binding = DataBindingUtil.setContentView(this@MainActivity, R.layout.activity_main)
         binding.ctCustomTab.initTabs {
-            buildTabsWithText("Recent News", "Saved News", "Profile", "Profile", "Profile")
+            buildTabsWithText("Recent News", "Saved News", "Profile","Recent News", "Saved News", "Profile")
 
             setOnTabChangeCallback { tabTitle ->
                 Toast.makeText(this@MainActivity, tabTitle, Toast.LENGTH_SHORT).show()

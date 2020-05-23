@@ -1,7 +1,6 @@
 package com.androiddevs.newsflash.ui.views
 
 import android.content.Context
-import android.content.res.ColorStateList
 import android.graphics.Canvas
 import android.graphics.Point
 import android.graphics.Rect
@@ -16,7 +15,7 @@ import androidx.dynamicanimation.animation.DynamicAnimation
 import androidx.dynamicanimation.animation.SpringAnimation
 import androidx.dynamicanimation.animation.SpringForce
 import com.androiddevs.newsflash.R
-import com.google.android.material.chip.Chip
+import com.androiddevs.newsflash.ui.views.CustomTab.Companion.getChip
 
 
 class CustomTabLayout @JvmOverloads constructor(
@@ -25,7 +24,8 @@ class CustomTabLayout @JvmOverloads constructor(
     DynamicAnimation.OnAnimationUpdateListener {
 
 
-    private val chipList: MutableList<Chip> = ArrayList()
+    private var isScrollable: Boolean = false
+    private val chipList: MutableList<CustomTab> = ArrayList()
     private var selectedIndex = 0
 
     private var onTabPressCallback: ((String) -> Unit)? = null
@@ -40,14 +40,12 @@ class CustomTabLayout @JvmOverloads constructor(
 
     private var globalPositionOffsetPixels: Float = 0F
 
-    private var backgroundRect = Rect()
-
     private val backgroundChip by lazy {
         getChip(context) {
             isClickable = false
             isFocusable = false
-            chipBackgroundColor =
-                ColorStateList.valueOf(ContextCompat.getColor(context, R.color.colorSecondaryDark))
+            visibility = View.GONE
+            setSelectedBackgroundColor(ContextCompat.getColor(context, R.color.colorSecondaryDark))
         }
     }
 
@@ -116,8 +114,9 @@ class CustomTabLayout @JvmOverloads constructor(
             chipList.forEach {
                 parentViewGroup.addView(it)
             }
+            isScrollable = width + 100 > context.resources.displayMetrics.widthPixels
 
-            if (width + 100 > context.resources.displayMetrics.widthPixels) {
+            if (isScrollable) {
                 removeView(parentViewGroup)
                 val frameLayout = FrameLayout(context)
                 frameLayout.addView(backgroundChip)
@@ -136,8 +135,14 @@ class CustomTabLayout @JvmOverloads constructor(
             if (selectedIndex != v.id) {
                 backgroundChip.updateLayoutParams {
                     width = v.boundingBox.width()
+                    backgroundChip.setSelectedTabWidth(v.boundingBox.width())
                 }
                 globalPositionOffsetPixels = v.left.toFloat()
+                if (isScrollable)
+                    parentViewGroupScrollable.smoothScrollTo(
+                        v.boundingBox.left - backgroundChip.defaultPadding,
+                        0
+                    )
                 dotIndicatorSpring.spring.finalPosition = globalPositionOffsetPixels
                 dotIndicatorSpring.animateToFinalPosition(globalPositionOffsetPixels)
                 selectedIndex = v.id
@@ -160,10 +165,10 @@ class CustomTabLayout @JvmOverloads constructor(
     override fun onDraw(canvas: Canvas?) {
         super.onDraw(canvas)
         chipList.find { it.id == selectedIndex }?.let {
-            backgroundRect = it.boundingBox
             backgroundChip.updateLayoutParams {
-                width = backgroundRect.width()
-                height = backgroundRect.height()
+                width = it.boundingBox.width()
+                backgroundChip.setSelectedTabWidth(it.boundingBox.width())
+                height = it.measuredHeight
             }
         }
     }
