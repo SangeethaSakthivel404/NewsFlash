@@ -43,6 +43,7 @@ buildscript {
 
                 // misc
                 android_state       : '1.4.1',
+                dynamicanimation_version : '1.0.0'
         ]
     }
 
