@@ -10,6 +10,7 @@ import android.widget.FrameLayout
 import android.widget.HorizontalScrollView
 import android.widget.LinearLayout
 import androidx.core.content.ContextCompat
+import androidx.core.view.children
 import androidx.core.view.updateLayoutParams
 import androidx.dynamicanimation.animation.DynamicAnimation
 import androidx.dynamicanimation.animation.SpringAnimation
@@ -26,7 +27,7 @@ class CustomTabLayout @JvmOverloads constructor(
 
     private var isScrollable: Boolean = false
     private val chipList: MutableList<CustomTab> = ArrayList()
-    private var selectedIndex = 0
+    private var selectedTabID = 0
 
     private var onTabPressCallback: ((String) -> Unit)? = null
 
@@ -73,23 +74,22 @@ class CustomTabLayout @JvmOverloads constructor(
         }
     }
 
-    fun buildTabsWithText(vararg titleList: String) {
-        titleList.forEachIndexed { index, title ->
-            addTab(title)
-        }
-    }
 
-    fun addTab(titleList: String) {
+    fun addTab(
+        titleList: String,
+        initBlock: CustomTab.() -> Unit = {}
+    ) {
         val chip = getChip(context) {
             id = View.generateViewId()
             text = titleList
             isSelected = if (chipList.isEmpty()) {
-                selectedIndex = id
+                selectedTabID = id
                 true
             } else {
                 false
             }
             isClickable = true
+            initBlock()
             setOnClickListener(this@CustomTabLayout)
         }
         backgroundChip.visibility = View.VISIBLE
@@ -130,28 +130,20 @@ class CustomTabLayout @JvmOverloads constructor(
         }
     }
 
-    override fun onClick(v: View?) {
-        v?.let {
-            if (selectedIndex != v.id) {
-                backgroundChip.updateLayoutParams {
-                    width = v.boundingBox.width()
-                    backgroundChip.setSelectedTabWidth(v.boundingBox.width())
+    fun selectedTab(selectedIndex: Int) {
+        chipList.forEachIndexed { index, customTab ->
+            if (index == selectedIndex) {
+                selectedTabID = customTab.id
+                customTab.isSelected = true
+                post {
+                    animateViews(customTab)
                 }
-                globalPositionOffsetPixels = v.left.toFloat()
-                if (isScrollable)
-                    parentViewGroupScrollable.smoothScrollTo(
-                        v.boundingBox.left - backgroundChip.defaultPadding,
-                        0
-                    )
-                dotIndicatorSpring.spring.finalPosition = globalPositionOffsetPixels
-                dotIndicatorSpring.animateToFinalPosition(globalPositionOffsetPixels)
-                selectedIndex = v.id
-                chipList.forEach {
-                    it.isSelected = it.id == selectedIndex
-                }
+            } else {
+                customTab.isSelected = false
             }
         }
     }
+
 
     fun setOnTabChangeCallback(onTabPressCallback: (String) -> Unit) {
         this.onTabPressCallback = onTabPressCallback
@@ -162,15 +154,21 @@ class CustomTabLayout @JvmOverloads constructor(
         setLayoutParams()
     }
 
-    override fun onDraw(canvas: Canvas?) {
-        super.onDraw(canvas)
-        chipList.find { it.id == selectedIndex }?.let {
+
+    private fun initBackgroundChip() {
+        parentViewGroup.children.find { it.id == selectedTabID }?.let {
             backgroundChip.updateLayoutParams {
-                width = it.boundingBox.width()
-                backgroundChip.setSelectedTabWidth(it.boundingBox.width())
+                width = it.measuredWidth
+                backgroundChip.setSelectedTabWidth(it.measuredWidth)
                 height = it.measuredHeight
             }
         }
+    }
+
+
+    override fun onDraw(canvas: Canvas?) {
+        super.onDraw(canvas)
+        initBackgroundChip()
     }
 
 
@@ -179,6 +177,33 @@ class CustomTabLayout @JvmOverloads constructor(
         value: Float,
         velocity: Float
     ) {
+    }
+
+    override fun onClick(view: View?) {
+        view?.let {
+            if (selectedTabID != view.id) {
+                backgroundChip.updateLayoutParams {
+                    width = view.measuredWidth
+                    backgroundChip.setSelectedTabWidth(view.measuredWidth)
+                }
+                animateViews(view)
+                selectedTabID = view.id
+                chipList.forEach {
+                    it.isSelected = it.id == selectedTabID
+                }
+            }
+        }
+    }
+
+    private fun animateViews(view: View) {
+        globalPositionOffsetPixels = view.left.toFloat() - 12
+        if (isScrollable)
+            parentViewGroupScrollable.smoothScrollTo(
+                view.boundingBox.left - backgroundChip.defaultPadding,
+                0
+            )
+        dotIndicatorSpring.spring.finalPosition = globalPositionOffsetPixels
+        dotIndicatorSpring.animateToFinalPosition(globalPositionOffsetPixels)
     }
 }
 

@@ -19,31 +19,38 @@ class CustomTab @JvmOverloads constructor(
 ) : AppCompatTextView(context, attrs, defStyleAttr) {
 
     companion object {
-        fun getChip(context: Context, initBlock: CustomTab.() -> Unit = {}): CustomTab {
-            val chip = CustomTab(context)
-            chip.apply {
+        inline fun getChip(context: Context, initBlock: CustomTab.() -> Unit = {}): CustomTab =
+            CustomTab(context).apply {
                 layoutParams = LinearLayout.LayoutParams(
                     LinearLayout.LayoutParams.WRAP_CONTENT,
                     LinearLayout.LayoutParams.WRAP_CONTENT,
                     1F
-                )
+                ).also {
+                    it.leftMargin = 12
+                    it.rightMargin = 12
+                }
                 initBlock()
             }
-            return chip
-        }
-
     }
 
+
+    private var strokeWidth: Float = 0F
+    private var strokeColour: Int = 0
+
+
+    private val backgroundPadding = 4
+
+    private var shouldStroke: Boolean = false
     val defaultPadding by lazy {
         16 * context.resources.displayMetrics.density.roundToInt()
     }
 
     private val backgroundRect by lazy {
         Rect(
-            0,
-            0,
-            measuredWidth,
-            measuredHeight
+            backgroundPadding,
+            backgroundPadding,
+            measuredWidth - backgroundPadding,
+            measuredHeight - backgroundPadding
         )
     }
 
@@ -53,7 +60,13 @@ class CustomTab @JvmOverloads constructor(
             color = Color.TRANSPARENT
             isAntiAlias = true
         }
+    }
 
+
+    fun setStrokeColor(color: Int, strokeWidth: Float = 1F) {
+        shouldStroke = true
+        this.strokeWidth = strokeWidth
+        this.strokeColour = color
     }
 
     fun setSelectedBackgroundColor(selectedColor: Int) {
@@ -80,7 +93,23 @@ class CustomTab @JvmOverloads constructor(
                 measuredHeight.toFloat(),
                 backgroundPaint
             )
+            if (shouldStroke) {
+                backgroundPaint.apply {
+                    style = Paint.Style.STROKE
+                    strokeJoin = Paint.Join.ROUND
+                    strokeCap = Paint.Cap.ROUND
+                    strokeWidth = this@CustomTab.strokeWidth
+                    color = strokeColour
+                }
+                it.drawRoundRect(
+                    backgroundRect.toRectF(),
+                    measuredHeight.toFloat(),
+                    measuredHeight.toFloat(),
+                    backgroundPaint
+                )
+            }
         }
+
         super.onDraw(canvas)
     }
 

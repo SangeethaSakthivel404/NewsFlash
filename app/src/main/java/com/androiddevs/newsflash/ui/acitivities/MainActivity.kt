@@ -1,5 +1,6 @@
 package com.androiddevs.newsflash.ui.acitivities
 
+import android.graphics.Color
 import android.os.Bundle
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
@@ -16,8 +17,12 @@ class MainActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         binding = DataBindingUtil.setContentView(this@MainActivity, R.layout.activity_main)
         binding.ctCustomTab.initTabs {
-            buildTabsWithText("Recent News", "Saved News", "Profile","Recent News", "Saved News", "Profile")
+            addTab("Recent News") {
 
+            }
+            addTab("Saved News")
+            addTab("Profile")
+            selectedTab(2)
             setOnTabChangeCallback { tabTitle ->
                 Toast.makeText(this@MainActivity, tabTitle, Toast.LENGTH_SHORT).show()
             }
