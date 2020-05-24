@@ -4,9 +4,13 @@
     <color name="colorPrimaryDark">#5571FF</color>
     <color name="colorAccent">#FF3D00</color>
     <color name="colorSecondaryDark">#4A67FC</color>
-    <color name="colorWhite">#FFFFFF</color>
+
 
     <color name="colorGreyText">#AAAAAA</color>
+
+    <!--white-->
+    <color name="colorWhite">#FFFFFF</color>
+    <color name="colorWhite_100">#22FFFFFF</color>
 
 
 </resources>

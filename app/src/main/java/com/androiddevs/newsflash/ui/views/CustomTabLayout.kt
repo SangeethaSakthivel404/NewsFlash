@@ -5,6 +5,7 @@ import android.graphics.Canvas
 import android.graphics.Point
 import android.graphics.Rect
 import android.util.AttributeSet
+import android.util.Log
 import android.view.View
 import android.widget.FrameLayout
 import android.widget.HorizontalScrollView
@@ -12,7 +13,6 @@ import android.widget.LinearLayout
 import androidx.core.content.ContextCompat
 import androidx.core.view.children
 import androidx.core.view.updateLayoutParams
-import androidx.dynamicanimation.animation.DynamicAnimation
 import androidx.dynamicanimation.animation.SpringAnimation
 import androidx.dynamicanimation.animation.SpringForce
 import com.androiddevs.newsflash.R
@@ -21,15 +21,15 @@ import com.androiddevs.newsflash.ui.views.CustomTab.Companion.getChip
 
 class CustomTabLayout @JvmOverloads constructor(
     context: Context, attrs: AttributeSet? = null, defStyleAttr: Int = 0
-) : FrameLayout(context, attrs, defStyleAttr), View.OnClickListener,
-    DynamicAnimation.OnAnimationUpdateListener {
+) : FrameLayout(context, attrs, defStyleAttr), View.OnClickListener {
 
 
     private var isScrollable: Boolean = false
-    private val chipList: MutableList<CustomTab> = ArrayList()
+    private val tabsList: MutableList<CustomTab> = ArrayList()
+
     private var selectedTabID = 0
 
-    private var onTabPressCallback: ((String) -> Unit)? = null
+    private var onTabPressCallback: ((String?) -> Unit)? = null
 
     private val parentViewGroup by lazy {
         LinearLayout(context)
@@ -56,7 +56,6 @@ class CustomTabLayout @JvmOverloads constructor(
             springForce.dampingRatio = 0.75f
             springForce.stiffness = 300F
             spring = springForce
-            addUpdateListener(this@CustomTabLayout)
         }
     }
 
@@ -74,26 +73,29 @@ class CustomTabLayout @JvmOverloads constructor(
         }
     }
 
+    fun CustomTab.setSelected() {
+        val index = tabsList.indexOfFirst { it.id == id }
+        selectedTab(index)
+    }
 
     fun addTab(
         titleList: String,
         initBlock: CustomTab.() -> Unit = {}
     ) {
-        val chip = getChip(context) {
+        getChip(context) {
             id = View.generateViewId()
             text = titleList
-            isSelected = if (chipList.isEmpty()) {
+            isSelected = if (tabsList.isEmpty()) {
                 selectedTabID = id
                 true
             } else {
                 false
             }
-            isClickable = true
-            initBlock()
             setOnClickListener(this@CustomTabLayout)
+            tabsList.add(this)
+            initBlock()
         }
         backgroundChip.visibility = View.VISIBLE
-        chipList.add(chip)
     }
 
     private fun setLayoutParams() {
@@ -105,13 +107,13 @@ class CustomTabLayout @JvmOverloads constructor(
             display.getSize(pointWidth)
             display.getSize(pointHeight)
 
-            chipList.forEach {
+            tabsList.forEach {
                 it.measure(pointWidth.x, pointHeight.y)
                 width += it.measuredWidth
             }
             parentViewGroup.removeAllViews()
 
-            chipList.forEach {
+            tabsList.forEach {
                 parentViewGroup.addView(it)
             }
             isScrollable = width + 100 > context.resources.displayMetrics.widthPixels
@@ -131,12 +133,12 @@ class CustomTabLayout @JvmOverloads constructor(
     }
 
     fun selectedTab(selectedIndex: Int) {
-        chipList.forEachIndexed { index, customTab ->
+        tabsList.forEachIndexed { index, customTab ->
             if (index == selectedIndex) {
                 selectedTabID = customTab.id
                 customTab.isSelected = true
                 post {
-                    animateViews(customTab)
+                    backgroundChip.x = customTab.left.toFloat()
                 }
             } else {
                 customTab.isSelected = false
@@ -145,7 +147,7 @@ class CustomTabLayout @JvmOverloads constructor(
     }
 
 
-    fun setOnTabChangeCallback(onTabPressCallback: (String) -> Unit) {
+    fun setOnTabChangeCallback(onTabPressCallback: (String?) -> Unit) {
         this.onTabPressCallback = onTabPressCallback
     }
 
@@ -155,12 +157,12 @@ class CustomTabLayout @JvmOverloads constructor(
     }
 
 
-    private fun initBackgroundChip() {
-        parentViewGroup.children.find { it.id == selectedTabID }?.let {
+    private fun measureBackgroundParams() {
+        parentViewGroup.children.find { it.id == selectedTabID }?.let { selectedChip ->
             backgroundChip.updateLayoutParams {
-                width = it.measuredWidth
-                backgroundChip.setSelectedTabWidth(it.measuredWidth)
-                height = it.measuredHeight
+                width = selectedChip.measuredWidth
+                backgroundChip.setSelectedTabWidth(selectedChip.measuredWidth)
+                height = selectedChip.measuredHeight
             }
         }
     }
@@ -168,29 +170,23 @@ class CustomTabLayout @JvmOverloads constructor(
 
     override fun onDraw(canvas: Canvas?) {
         super.onDraw(canvas)
-        initBackgroundChip()
-    }
-
-
-    override fun onAnimationUpdate(
-        animation: DynamicAnimation<out DynamicAnimation<*>>?,
-        value: Float,
-        velocity: Float
-    ) {
+        measureBackgroundParams()
     }
 
     override fun onClick(view: View?) {
         view?.let {
+            onTabPressCallback?.invoke((view as CustomTab).text.toString())
+
             if (selectedTabID != view.id) {
                 backgroundChip.updateLayoutParams {
                     width = view.measuredWidth
                     backgroundChip.setSelectedTabWidth(view.measuredWidth)
                 }
-                animateViews(view)
                 selectedTabID = view.id
-                chipList.forEach {
+                tabsList.forEach {
                     it.isSelected = it.id == selectedTabID
                 }
+                animateViews(view)
             }
         }
     }

@@ -82,6 +82,7 @@ class CustomTab @JvmOverloads constructor(
         textAlignment = View.TEXT_ALIGNMENT_CENTER
         setBackgroundColor(Color.TRANSPARENT)
         setTextColor(ContextCompat.getColorStateList(context, R.color.tablayout_tab_text))
+        background = ContextCompat.getDrawable(context, R.drawable.tablayout_tab_background)
         setPadding(defaultPadding, defaultPadding / 2, defaultPadding, defaultPadding / 2)
     }
 
